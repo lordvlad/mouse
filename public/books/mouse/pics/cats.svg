@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150">
+<g stroke="#1b2a6b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<ellipse cx="66" cy="90" rx="46" ry="26" fill="#8e96a8"/>
+<path d="M26 66 L26 46 L42 60 Z M46 60 L58 46 L60 66 Z" fill="#8e96a8"/>
+<circle cx="42" cy="78" r="20" fill="#8e96a8"/>
+<path d="M32 78 Q36 82 40 78 M46 78 Q50 82 54 78" fill="none" stroke-width="3"/>
+<path d="M100 96 C110 80 96 70 86 76" fill="none" stroke-width="5"/>
+<ellipse cx="136" cy="88" rx="46" ry="28" fill="#ff9f43"/>
+<path d="M126 64 V80 M138 62 V80 M150 64 V80" stroke-width="3"/>
+<path d="M150 60 L148 40 L164 52 Z M168 52 L184 42 L182 62 Z" fill="#ff9f43"/>
+<circle cx="164" cy="72" r="21" fill="#ff9f43"/>
+<path d="M154 72 Q158 76 162 72 M168 72 Q172 76 176 72" fill="none" stroke-width="3"/>
+<path d="M14 98 H186 L172 144 H28 Z" fill="#c98a4b"/>
+<path d="M20 112 H180 M24 128 H176" stroke-width="3"/>
+</g>
+<text x="84" y="34" font-family="sans-serif" font-weight="900" font-size="22" fill="#1b2a6b">Z z z</text>
+</svg>

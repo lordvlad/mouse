@@ -1,0 +1,10 @@
+{
+  "name": "mouse",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun src/server.ts",
+    "check": "bun scripts/check.js",
+    "android": "bun android/build.ts"
+  }
+}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150">
+<g stroke="#1b2a6b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+<path d="M18 146 V82 C18 26 182 26 182 82 V146 Z" fill="#6b4632"/>
+<path d="M4 146 H196"/>
+<path d="M40 142 V112 C40 104 46 100 54 100 H128 C150 100 166 110 166 124 C166 136 156 142 142 142 Z" fill="#ff6b6b"/>
+<path d="M98 102 V140 M114 102 V140" stroke="#fff" stroke-width="7"/>
+<path d="M40 142 V112 C40 104 46 100 54 100 H128 C150 100 166 110 166 124 C166 136 156 142 142 142 Z" fill="none"/>
+<circle cx="54" cy="72" r="11" fill="#a9b0c2"/><circle cx="88" cy="70" r="11" fill="#a9b0c2"/>
+<circle cx="70" cy="94" r="22" fill="#a9b0c2"/>
+<path d="M58 92 Q63 97 67 92 M74 92 Q78 97 83 92" fill="none" stroke-width="3"/>
+<circle cx="70" cy="103" r="4" fill="#ff7aa2" stroke-width="2.5"/>
+</g>
+<text x="112" y="76" font-family="sans-serif" font-weight="900" font-size="24" fill="#fff">Z z z</text>
+</svg>

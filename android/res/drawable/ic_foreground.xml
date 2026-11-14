@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pip the mouse (matches public/icon.svg), inside the central 66dp safe circle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFA9B0C2" android:strokeColor="#FF1B2A6B" android:strokeWidth="3.54"
+        android:pathData="M27.28,43.38 a12.88,12.88 0 1,0 25.76,0 a12.88,12.88 0 1,0 -25.76,0 Z" />
+    <path android:fillColor="#FFA9B0C2" android:strokeColor="#FF1B2A6B" android:strokeWidth="3.54"
+        android:pathData="M54.96,43.38 a12.88,12.88 0 1,0 25.76,0 a12.88,12.88 0 1,0 -25.76,0 Z" />
+    <path android:fillColor="#FFFFB3C7" android:strokeColor="#FF1B2A6B" android:strokeWidth="2.25"
+        android:pathData="M32.92,43.38 a7.24,7.24 0 1,0 14.48,0 a7.24,7.24 0 1,0 -14.48,0 Z" />
+    <path android:fillColor="#FFFFB3C7" android:strokeColor="#FF1B2A6B" android:strokeWidth="2.25"
+        android:pathData="M60.6,43.38 a7.24,7.24 0 1,0 14.48,0 a7.24,7.24 0 1,0 -14.48,0 Z" />
+    <path android:fillColor="#FFA9B0C2" android:strokeColor="#FF1B2A6B" android:strokeWidth="3.54"
+        android:pathData="M33.07,59.47 a20.93,17.71 0 1,0 41.86,0 a20.93,17.71 0 1,0 -41.86,0 Z" />
+    <path android:fillColor="#FF1B2A6B"
+        android:pathData="M44.82,56.25 a2.58,2.58 0 1,0 5.16,0 a2.58,2.58 0 1,0 -5.16,0 Z" />
+    <path android:fillColor="#FF1B2A6B"
+        android:pathData="M58.02,56.25 a2.58,2.58 0 1,0 5.16,0 a2.58,2.58 0 1,0 -5.16,0 Z" />
+    <path android:fillColor="#FFFF7AA2" android:strokeColor="#FF1B2A6B" android:strokeWidth="1.93"
+        android:pathData="M50.78,64.3 a3.22,3.22 0 1,0 6.44,0 a3.22,3.22 0 1,0 -6.44,0 Z" />
+    <path android:strokeColor="#FF1B2A6B" android:strokeWidth="1.61" android:strokeLineCap="round"
+        android:pathData="M45.95,65.91 L33.72,63.98 M45.95,68.49 L34.04,71.06 M62.05,65.91 L74.28,63.98 M62.05,68.49 L73.96,71.06" />
+    <path android:strokeColor="#FF1B2A6B" android:strokeWidth="1.61" android:strokeLineCap="round"
+        android:pathData="M50.14,69.45 Q54.0,72.67 57.86,69.45" />
+</vector>

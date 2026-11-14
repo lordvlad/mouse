@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffd34e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mouse Adventures</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root { --navy:#1b2a6b; --theme:#ffd34e; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; margin:0; }
+  body { background:linear-gradient(160deg,var(--theme),#b6a6ff 55%,#ffb3e6); color:var(--navy);
+         font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;
+         display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+         padding:env(safe-area-inset-top) 8px env(safe-area-inset-bottom); user-select:none; }
+  [hidden] { display:none !important; }
+  /* buttons as in ../draw: rounded squares, navy outline, hard drop shadow that collapses on press */
+  button { font:inherit; font-weight:900; color:var(--navy); background:#fff; border:4px solid var(--navy); border-radius:20px;
+           padding:.3em .9em; font-size:28px; cursor:pointer; box-shadow:0 5px 0 var(--navy); transition:background .12s; }
+  button:active { transform:translateY(4px); box-shadow:0 1px 0 var(--navy); }
+
+  /* ---- app UI ---- */
+  :root { --fs:1; --pink:#d6336c; }
+  body { justify-content:flex-start; gap:0; background-attachment:fixed; }
+  h1,h2,h3,p { margin:0; }
+  .screen { width:min(960px,100%); display:flex; flex-direction:column; gap:14px; padding:12px 6px 96px; }
+  .bar { display:flex; align-items:center; gap:12px; min-height:60px; }
+  .bar h1 { flex:1; font-size:clamp(26px,6vmin,44px); text-shadow:0 3px 0 #fff; }
+  .iconBtn { flex:none; width:64px; height:64px; min-width:0; padding:0; display:flex; align-items:center; justify-content:center; }
+  .iconBtn svg { width:40px; height:40px; display:block; }
+  .parentsBtn { background:#ffe066; }
+  .card { background:#fff; border:5px solid var(--navy); border-radius:28px; box-shadow:0 7px 0 var(--navy); padding:18px; }
+  .big { font-size:clamp(24px,5vmin,34px); align-self:center; background:#69db7c; border-radius:22px; }
+
+  /* grown-ups page */
+  .prose { font-size:18px; line-height:1.45; user-select:text; -webkit-user-select:text; display:flex; flex-direction:column; gap:10px; }
+  .prose h1 { font-size:clamp(28px,6vmin,40px); }
+  .prose h2 { font-size:22px; margin-top:8px; }
+  .prose ul, .prose ol { margin:0; padding-left:1.3em; display:flex; flex-direction:column; gap:6px; }
+  .prose .say { font-weight:800; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .seg button { padding:.05em .7em; }
+  .seg button.on { background:#b2f2bb; }
+  #resetBtn { background:#ff8787; font-size:18px; }
+
+  /* library + book */
+  .books { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; }
+  .bookCard { display:flex; flex-direction:column; align-items:center; gap:8px; border-radius:22px; padding:16px; text-align:center; }
+  .bookCard img { width:100%; max-height:200px; object-fit:contain; }
+  .bookCard .t { font-size:34px; }
+  .bookCard .sub { font-size:18px; font-weight:700; }
+  .bookHead { display:flex; gap:16px; align-items:center; font-size:clamp(20px,4vmin,28px); font-weight:700; line-height:1.4; }
+  .bookHead img { width:min(36%,220px); flex:none; }
+  .chapters { display:flex; flex-direction:column; gap:14px; }
+  .chap { display:flex; align-items:center; gap:14px; text-align:left; border-radius:22px; padding:10px 16px; font-size:clamp(22px,4.5vmin,32px); }
+  .chap .n { flex:none; width:1.7em; height:1.7em; border-radius:14px; border:4px solid var(--navy); display:flex; align-items:center; justify-content:center; background:#ffe066; }
+  .chap .t { flex:1; }
+  .chap .badge { flex:none; display:flex; align-items:center; }
+  .chap .badge svg { height:1.4em; width:1.4em; }
+  .chap:disabled { background:#e9ecf3; color:#6b7390; box-shadow:0 5px 0 #6b7390; border-color:#6b7390; cursor:default; transform:none; }
+
+  /* reader */
+  #reader .bar { flex-wrap:wrap; position:sticky; top:0; z-index:4; margin:-12px -6px 0; padding:8px 6px; background:#ffffffa8; backdrop-filter:blur(8px);
+                 -webkit-backdrop-filter:blur(8px); border-radius:0 0 22px 22px; }
+  .story em { font-style:italic; }
+  .story strong { font-weight:900; letter-spacing:.06em; }
+  #readTitle { flex:1; font-size:20px; font-weight:800; min-width:120px; }
+  .bag { display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:flex-end; }
+  .bag .it { position:relative; display:flex; align-items:center; gap:1px; height:52px; padding:4px 8px; border-radius:16px; font-size:20px; min-width:0; }
+  .bag img { height:32px; width:32px; object-fit:contain; }
+  .bag .stat img { width:26px; height:26px; }
+  .bag .cnt { position:absolute; right:-8px; top:-10px; background:var(--pink); color:#fff; border-radius:999px; font-size:15px; padding:0 6px; border:2px solid var(--navy); }
+  .page { display:grid; gap:16px; align-items:start; animation:pageIn .35s ease-out; }
+  @keyframes pageIn { from { opacity:0; transform:translateY(12px); } }
+  .pic img { display:block; width:100%; max-height:32vh; object-fit:contain; }
+  .col { display:flex; flex-direction:column; gap:20px; min-width:0; }
+  .story { font-size:calc(var(--fs) * clamp(24px, 2.4vmin + 16px, 38px)); line-height:1.55; font-weight:700; letter-spacing:.02em; word-spacing:.12em;
+           font-family:"Andika","Comic Sans MS","Comic Neue",ui-rounded,"Trebuchet MS",system-ui,sans-serif; }
+  .story .gap { height:.55em; }
+  .story figure { margin:6px 0; } .story figure img { max-width:100%; max-height:28vh; }
+  .w { border-radius:8px; cursor:pointer; }
+  .w.hl { background:#fff27a; box-shadow:0 0 0 4px #fff27a; }
+  .tap { color:var(--pink); text-decoration:underline dotted 4px; text-underline-offset:6px; cursor:pointer; border-radius:8px; animation:glow 1.8s ease-in-out infinite; }
+  .tap.got { color:#2b8a3e; text-decoration-style:solid; animation:none; }
+  @keyframes glow { 50% { background:#ffe58a; box-shadow:0 0 0 4px #ffe58a; } }
+  .choices { display:flex; flex-direction:column; gap:14px; }
+  .choice { display:flex; align-items:center; gap:12px; text-align:left; border-radius:22px; padding:.45em .7em;
+            font-size:calc(var(--fs) * clamp(22px, 2vmin + 15px, 34px)); line-height:1.25; }
+  .choice .lbl { flex:1; }
+  .choice svg { flex:none; height:1.3em; width:1.3em; }
+  .choice.locked { background:#e9ecf3; color:#6b7390; border-color:#6b7390; box-shadow:0 5px 0 #6b7390; }
+  .need { display:flex; gap:2px; align-items:center; flex:none; }
+  .need img, .need svg { height:1.25em; width:1.25em; object-fit:contain; }
+  @media (min-aspect-ratio:1/1) {
+    .page:not(.nopic) { grid-template-columns:minmax(0,2fr) minmax(0,3fr); }
+    .page:not(.nopic) .pic { position:sticky; top:12px; }
+    .pic img { max-height:60vh; }
+  }
+
+  /* chapter finished */
+  .done { display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; font-size:clamp(22px,4.5vmin,30px); font-weight:800; }
+  .done h1 { font-size:clamp(34px,8vmin,56px); }
+  .done svg.burst { width:min(40vmin,180px); animation:spin 6s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .done .bag { justify-content:center; }
+  .done .btns { display:flex; flex-wrap:wrap; gap:14px; justify-content:center; }
+
+  /* toasts: found things, stat changes, things people say */
+  #toasts { position:fixed; left:0; right:0; top:calc(92px + env(safe-area-inset-top)); z-index:10; display:flex; justify-content:center; pointer-events:none; padding:0 12px; }
+  .toast { pointer-events:auto; display:flex; align-items:center; gap:12px; max-width:min(560px,100%); background:#fff; border:5px solid var(--navy); border-radius:24px;
+           box-shadow:0 6px 0 var(--navy); padding:10px 18px; font-size:calc(var(--fs) * 26px); font-weight:900; animation:toastIn .3s cubic-bezier(.3,1.6,.6,1); }
+  .toast.say { background:#fff8d6; font-style:italic; }
+  .toast img { height:52px; width:52px; object-fit:contain; flex:none; }
+  .toast.out { opacity:0; transform:translateY(20px); transition:.25s; }
+  @keyframes toastIn { from { transform:scale(.4); opacity:0; } }
+  body:not(.lib) .corner { display:none; }
+
+  /* ---- corner buttons: download (bottom left), donate (bottom right) ---- */
+  .corner { position:fixed; bottom:max(12px,env(safe-area-inset-bottom)); z-index:5; display:flex; align-items:center; justify-content:center;
+            width:56px; height:56px; min-width:0; padding:9px; border-radius:50%; border:4px solid var(--navy); background:#fff;
+            box-shadow:0 4px 0 var(--navy); cursor:pointer; }
+  .corner:active { transform:translateY(3px); box-shadow:0 1px 0 var(--navy); }
+  .corner svg { width:100%; height:100%; }
+  #apkBtn { left:max(12px,env(safe-area-inset-left)); }
+  #heartBtn { right:max(12px,env(safe-area-inset-right)); background:#ffc9de; }
+  #donate { position:fixed; inset:0; z-index:12; background:#1b2a6bcc; display:flex; align-items:center; justify-content:center; padding:16px; }
+  #donate .card { position:relative; width:min(420px,100%); max-height:100%; overflow:auto; touch-action:pan-y; background:#fff; border:5px solid var(--navy);
+                  border-radius:30px; padding:22px 22px 14px; box-shadow:0 8px 0 var(--navy); color:var(--navy); text-align:center;
+                  user-select:text; -webkit-user-select:text; }
+  #donate .card * { user-select:text; -webkit-user-select:text; }
+  #donate .cup { display:block; width:72px; height:72px; margin:0 auto 4px; }
+  #donateNote { margin:8px 0; font-weight:700; }
+  #gate p { margin:6px 0 12px; font-size:16px; font-weight:700; }
+  #gateQ { font-size:34px; font-weight:900; margin:4px 0 12px; }
+  #gate .row { display:flex; gap:10px; justify-content:center; }
+  #gateA { width:120px; font:inherit; font-size:28px; font-weight:800; text-align:center; color:var(--navy); border:4px solid var(--navy); border-radius:16px; padding:6px; }
+  #gate button[type=submit] { font:inherit; font-size:22px; font-weight:900; color:#fff; background:#2fc65a; border:4px solid var(--navy);
+                              border-radius:16px; padding:0 20px; box-shadow:0 4px 0 var(--navy); cursor:pointer; }
+  #gate.wrong #gateA { border-color:#e03131; animation:shake .35s; }
+  @keyframes shake { 25% { transform:translateX(-8px) } 75% { transform:translateX(8px) } }
+  #closeDonate { position:absolute; top:10px; right:10px; width:48px; height:48px; min-width:0; padding:7px; border-radius:50%;
+                 border:4px solid var(--navy); background:#fff; box-shadow:none; cursor:pointer; }
+  #closeDonate svg { width:100%; height:100%; }
+</style>
+</head>
+<body>
+<!-- ---- app UI ---- -->
+<section id="intro" class="screen" hidden>
+  <div class="card prose">
+    <h1>Hello, grown-ups!</h1>
+    <p><b>Mouse Adventures</b> is a story game for children who are just learning to read (about age 6 to 7).
+      Your child reads the story out loud and decides what happens next. Please read this page first, then explain the rules to your child.</p>
+    <h2>How it works</h2>
+    <ul>
+      <li>The library has <b>books</b>. Each book has <b>chapters</b>. A chapter is a handful of short pages and takes about 10 to 15 minutes.</li>
+      <li>At the bottom of each page are <b>choice buttons</b>. Your child reads them and taps one. There are no wrong choices: some paths are just longer.</li>
+      <li><b>Glowing pink words</b> can be tapped. That is how the hero finds things (a sock, a crumb, a bell) and hears little secrets. Only careful readers find them!</li>
+      <li><b>Stars</b> at the top show how brave the hero is. Found things go in the bag next to them. Some choices stay grey and locked until the hero is brave enough or carries the right thing: the lock shows what is missing.</li>
+      <li>Tapping any other word marks it yellow. It helps a finger-reader keep their place.</li>
+      <li>Progress is saved on this device. The next chapter opens once the one before is finished. Things and stars carry over into the next chapter.</li>
+    </ul>
+    <h2>Ground rules for your child</h2>
+    <ol>
+      <li><span class="say">"You read, I help."</span> Your child reads every word out loud. When a word is hard, sound it out together, but don't read it for them.</li>
+      <li><span class="say">"Read the whole page before you choose."</span> Then read every button before tapping one.</li>
+      <li><span class="say">"You decide."</span> It is their story. Any choice is okay, even a silly one.</li>
+      <li><span class="say">"Being scared is okay."</span> Pip the mouse is scared a lot, and gets braver by trying. Talk about it.</li>
+      <li><span class="say">"One chapter, then we stop."</span> At the end, talk about it: what happened? What would you do?</li>
+    </ol>
+    <h2>Tips</h2>
+    <ul>
+      <li>Let them take their time. Praise the effort, not the speed.</li>
+      <li>Ask before tapping a choice: "What do you think will happen?"</li>
+      <li>Reading a chapter again with other choices is great practice. There are hidden paths to find.</li>
+    </ul>
+    <h2>Settings</h2>
+    <div class="row">Text size:
+      <span class="seg row" id="sizeSeg"><button data-size="0" style="font-size:18px">A</button><button data-size="1" style="font-size:26px">A</button><button data-size="2" style="font-size:34px">A</button></span>
+    </div>
+    <div class="row"><button id="resetBtn">Erase all progress</button></div>
+    <button id="introGo" class="big">Let's read!</button>
+  </div>
+</section>
+
+<section id="library" class="screen" hidden>
+  <header class="bar"><h1>Mouse Adventures</h1><button class="iconBtn parentsBtn" aria-label="For grown-ups" title="For grown-ups"></button></header>
+  <div id="books" class="books"></div>
+</section>
+
+<section id="book" class="screen" hidden>
+  <header class="bar"><button class="iconBtn" id="bookBack" aria-label="Library" title="Library"></button><h1 id="bookTitle"></h1><button class="iconBtn parentsBtn" aria-label="For grown-ups" title="For grown-ups"></button></header>
+  <div class="card bookHead"><img id="bookCover" alt=""><div id="bookBlurb"></div></div>
+  <div id="chapters" class="chapters"></div>
+</section>
+
+<section id="reader" class="screen" hidden>
+  <header class="bar"><button class="iconBtn" id="readBack" aria-label="Chapters" title="Chapters"></button><div id="readTitle"></div><div id="bag" class="bag"></div></header>
+  <div id="page" class="card page"><div id="pic" class="pic"></div><div class="col"><div id="story" class="story"></div><div id="choices" class="choices"></div></div></div>
+</section>
+
+<section id="finish" class="screen" hidden>
+  <div class="card done">
+    <svg class="burst" viewBox="0 0 48 48"><path d="M24 2 L28 14 L40 8 L34 20 L46 24 L34 28 L40 40 L28 34 L24 46 L20 34 L8 40 L14 28 L2 24 L14 20 L8 8 L20 14 Z" fill="#ffd34e" stroke="#1b2a6b" stroke-width="2.5" stroke-linejoin="round"/></svg>
+    <h1>You did it!</h1>
+    <p id="doneText"></p>
+    <p id="doneWords"></p>
+    <div id="doneBag" class="bag"></div>
+    <div class="btns"><button id="doneNext" class="big"></button><button id="doneBook">Back to the book</button></div>
+  </div>
+</section>
+
+<div id="toasts"></div>
+
+<a id="apkBtn" class="corner" hidden href="mouse.apk" download="mouse.apk" data-i18n-label="apk"><svg viewBox="0 0 48 48" fill="none" stroke="#1b2a6b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M24 7 V31 M13 21 L24 32 L35 21 M9 41 H39"/></svg></a>
+<button id="heartBtn" class="corner" hidden data-i18n-label="donate"><svg viewBox="0 0 48 48" stroke="#1b2a6b" stroke-width="4" stroke-linejoin="round"><path d="M24 41 C10 31 4 24 4 16 C4 9 9 5 15 5 C19 5 22 7 24 11 C26 7 29 5 33 5 C39 5 44 9 44 16 C44 24 38 31 24 41 Z" fill="#ff4d8d"/></svg></button>
+
+<div id="donate" hidden>
+  <div class="card">
+    <button id="closeDonate" data-i18n-label="close"><svg viewBox="0 0 48 48" fill="none" stroke="#1b2a6b" stroke-width="6" stroke-linecap="round"><path d="M13 13 L35 35 M35 13 L13 35"/></svg></button>
+    <svg class="cup" viewBox="0 0 64 64" stroke="#1b2a6b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M24 6 C20 10 28 12 24 18 M34 6 C30 10 38 12 34 18" fill="none"/>
+      <path d="M10 24 H48 V40 C48 50 40 56 29 56 C18 56 10 50 10 40 Z" fill="#c08457"/>
+      <path d="M48 28 C58 28 58 42 47 42" fill="none"/><path d="M28 34 C24 30 18 34 24 40 L28 44 L32 40 C38 34 32 30 28 34 Z" fill="#ff4d8d" stroke-width="2.5"/></svg>
+    <form id="gate" autocomplete="off">
+      <p data-i18n="gate"></p>
+      <div id="gateQ"></div>
+      <div class="row">
+        <input id="gateA" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" data-i18n-label="answer">
+        <button type="submit">OK</button>
+      </div>
+    </form>
+    <div id="pay" hidden>
+      <div id="paypal-container-7TRVZVKH42ZM6"></div>
+      <p id="donateNote" hidden></p>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+// ---- UI strings (de/en); data-i18n sets textContent, data-i18n-label sets aria-label + title ----
+const STRINGS = {
+  de: { apk: "Android-App herunterladen", donate: "Spendiere uns einen Kaffee", close: "Schließen", answer: "Antwort",
+        gate: "Für Erwachsene: Löse die Aufgabe, um fortzufahren.", offline: "Du bist offline. Verbinde dich mit dem Internet, um zu spenden.",
+        loading: "Lädt…", failed: "PayPal konnte nicht geladen werden. Bitte später erneut versuchen." },
+  en: { apk: "Download the Android app", donate: "Buy me a coffee", close: "Close", answer: "Answer",
+        gate: "For grown-ups: solve this to continue.", offline: "You're offline. Connect to the internet to donate.",
+        loading: "Loading…", failed: "PayPal couldn't be loaded. Please try again later." },
+};
+const T = STRINGS[document.documentElement.lang] || STRINGS.en;
+for (const e of document.querySelectorAll("[data-i18n]")) e.textContent = T[e.dataset.i18n];
+for (const e of document.querySelectorAll("[data-i18n-label]")) { e.setAttribute("aria-label", T[e.dataset.i18nLabel]); e.title = T[e.dataset.i18nLabel]; }
+
+// ---- platform helpers: the Android wrapper injects window.AndroidBridge; browsers fall back to web APIs ----
+const androidApp = !!window.AndroidBridge;
+let wakeLock = null, wantAwake = false;
+/** Keep the screen on while something runs (a timer, a game...). Call setAwake(false) when done. */
+async function setAwake(on) {
+  wantAwake = on;
+  if (androidApp) { window.AndroidBridge.setKeepScreenOn(on); return; }
+  try {
+    if (on && !wakeLock && "wakeLock" in navigator) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => { wakeLock = null; }); }
+    if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch {}
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && wakeLock === null && wantAwake) setAwake(true); });
+/** Short haptic pulse (milliseconds). */
+function buzz(ms) { if (androidApp) window.AndroidBridge.vibrate(ms); else navigator.vibrate?.(ms); }
+
+// ---- donate: PayPal hosted button, loaded only after a parent gate so the app stays offline-first ----
+const PAYPAL_SDK = "https://www.paypal.com/sdk/js?client-id=BAA3I7Ebq_jrRrnlIQTorf96Vylh95OQRNrqVHNIKrAZwR_W_TSGVwxmFpKQHdeP5y6_VcXKmOZ57oqBc8&components=hosted-buttons&disable-funding=venmo&currency=EUR";
+const PAYPAL_PAGE = "https://www.paypal.com/ncp/payment/7TRVZVKH42ZM6";
+let paypalState = "idle";   // idle | loading | ready
+const donateNote = text => { $("donateNote").textContent = text; $("donateNote").hidden = !text; };
+function loadPaypal() {
+  if (paypalState !== "idle") return;
+  if (!navigator.onLine) return donateNote(T.offline);
+  paypalState = "loading"; donateNote(T.loading);
+  const fail = () => { paypalState = "idle"; donateNote(T.failed); };
+  const s = document.createElement("script");
+  s.src = PAYPAL_SDK;
+  s.onload = () => {
+    paypal.HostedButtons({ hostedButtonId: "7TRVZVKH42ZM6" }).render("#paypal-container-7TRVZVKH42ZM6")
+      .then(() => { paypalState = "ready"; donateNote(""); }).catch(fail);
+  };
+  s.onerror = () => { s.remove(); fail(); };
+  document.head.append(s);
+}
+let gateAnswer = 0;
+function newQuestion() {
+  const a = 3 + Math.floor(Math.random() * 7), b = 6 + Math.floor(Math.random() * 4);
+  gateAnswer = a * b;
+  $("gateQ").textContent = `${a} × ${b} = ?`;
+  $("gateA").value = "";
+}
+function openDonate() {
+  newQuestion();
+  $("gate").hidden = false; $("pay").hidden = true; $("gate").classList.remove("wrong");
+  $("donate").hidden = false;
+  $("gateA").focus();
+}
+const closeDonate = () => { $("gateA").blur(); $("donate").hidden = true; };
+$("gate").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = $("gateA").value.trim();
+  if (v !== "" && Number(v) === gateAnswer) {
+    $("gateA").blur();
+    if (androidApp) {
+      // The WebView can't render the PayPal SDK button; open PayPal's hosted page in the system browser instead.
+      closeDonate();
+      window.AndroidBridge.openUrl(PAYPAL_PAGE);
+      return;
+    }
+    $("gate").hidden = true; $("pay").hidden = false;
+    loadPaypal();
+  } else {
+    $("gate").classList.remove("wrong"); void $("gate").offsetWidth; $("gate").classList.add("wrong");
+    newQuestion();
+  }
+});
+$("heartBtn").addEventListener("click", openDonate);
+$("closeDonate").addEventListener("click", closeDonate);
+$("donate").addEventListener("click", e => { if (e.target.id === "donate") closeDonate(); });
+// Donations only on the real deployment: inside the APK, or served over HTTPS / running under the service worker.
+const showHeart = () => { $("heartBtn").hidden = !(androidApp || location.protocol === "https:" || navigator.serviceWorker?.controller); };
+navigator.serviceWorker?.addEventListener("controllerchange", showHeart);
+showHeart();
+// The APK only exists where it was built (GitHub Pages CI, or a local `bun android/build.ts`), so probe for it.
+if (!androidApp) fetch("mouse.apk", { method: "HEAD" }).then(r => { $("apkBtn").hidden = !r.ok; }).catch(() => {});
+
+// Inside the APK the WebView serves the assets itself, so no service worker there.
+if ("serviceWorker" in navigator && !androidApp) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+<script type="module">
+// ---- app logic: library -> book -> chapter reader. Stories are markdown in books/ (format: WRITING.md), parsed by story.js.
+// Uses $, setAwake and buzz from the script above.
+import * as S from "./story.js";
+
+const ICON = {
+  home: `<svg viewBox="0 0 48 48" fill="none" stroke="#1b2a6b" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"><path d="M11 21 V41 H37 V21" fill="#ffe066"/><path d="M20 41 V29 H28 V41" fill="#fff"/><path d="M5 23 L24 7 L43 23"/></svg>`,
+  back: `<svg viewBox="0 0 48 48" fill="none" stroke="#1b2a6b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M30 8 L14 24 L30 40"/></svg>`,
+  parents: `<svg viewBox="0 0 48 48" stroke="#1b2a6b" stroke-width="3.5" stroke-linejoin="round"><path d="M5 45 V29 C5 22 9 19 16 19 C23 19 27 22 27 29 V45 Z" fill="#74c0fc"/><circle cx="16" cy="10" r="6.5" fill="#fff"/><path d="M26 45 V37 C26 32 29 30 35 30 C41 30 44 32 44 37 V45 Z" fill="#ff8787"/><circle cx="35" cy="23" r="5" fill="#fff"/></svg>`,
+  go: `<svg viewBox="0 0 48 48" fill="none" stroke="#1b2a6b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8 L34 24 L18 40"/></svg>`,
+  lock: `<svg viewBox="0 0 48 48" stroke="#6b7390" stroke-width="4" stroke-linejoin="round"><path d="M15 21 V15 C15 9 19 6 24 6 C29 6 33 9 33 15 V21" fill="none"/><rect x="9" y="21" width="30" height="22" rx="5" fill="#fff"/><circle cx="24" cy="32" r="3" fill="#6b7390"/></svg>`,
+  star: `<svg viewBox="0 0 48 48"><path d="M24 4 L29.6 17 L44 18.3 L33 27.8 L36.4 42 L24 34.5 L11.6 42 L15 27.8 L4 18.3 L18.4 17 Z" fill="#ffd34e" stroke="#1b2a6b" stroke-width="3.5" stroke-linejoin="round"/></svg>`,
+  play: `<svg viewBox="0 0 48 48"><path d="M14 7 L41 24 L14 41 Z" fill="#69db7c" stroke="#1b2a6b" stroke-width="4" stroke-linejoin="round"/></svg>`,
+};
+function el(tag, props = {}, ...kids) { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; }
+
+// ---- saved progress: per book { done: {chapterIndex: 1}, ends: {chapterIndex: state at its end}, cur: chapter in progress } ----
+const KEY = "mouse-adventures";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch {}
+const save = { intro: false, size: 1, books: {}, ...saved };
+const store = () => localStorage.setItem(KEY, JSON.stringify(save));
+const progressOf = key => (save.books[key] ??= { done: {}, ends: {}, cur: null });
+
+// ---- story files (fetched once, parsed once) ----
+const texts = new Map(), books = new Map(), chapters = new Map();
+function load(url) {
+  if (!texts.has(url)) texts.set(url, fetch(url).then(r => { if (!r.ok) throw new Error(`${r.status} ${url}`); return r.text(); }).catch(e => { texts.delete(url); throw e; }));
+  return texts.get(url);
+}
+const LIB = new URL("books/library.md", location.href).href;
+async function bookAt(entry) { if (!books.has(entry.url)) books.set(entry.url, S.parseBook(await load(entry.url), entry.url)); return books.get(entry.url); }
+async function chapterAt(url) { if (!chapters.has(url)) chapters.set(url, S.parseChapter(await load(url), url)); return chapters.get(url); }
+
+// ---- screens ----
+let lastScreen = "library";
+function show(id) {
+  for (const s of document.querySelectorAll(".screen")) s.hidden = s.id !== id;
+  if (id !== "intro") lastScreen = id;
+  document.body.classList.toggle("lib", id === "library");
+  setAwake(id === "reader");   // slow readers: keep the screen on while a chapter is open
+  scrollTo(0, 0);
+}
+// One action at a time (no double taps while a page loads); load errors become a friendly message.
+let busy = false;
+const act = fn => async (...args) => {
+  if (busy) return;
+  busy = true;
+  try { await fn(...args); }
+  catch (err) { console.error(err); toast([{ kind: "say", text: "Oops! That page could not be loaded." }]); }
+  finally { busy = false; }
+};
+
+async function openLibrary() {
+  const list = S.parseLibrary(await load(LIB), LIB);
+  $("books").replaceChildren(...await Promise.all(list.map(async entry => {
+    const book = await bookAt(entry), prog = progressOf(entry.path);
+    const done = book.chapters.filter((_, i) => prog.done[i]).length;
+    return el("button", { className: "bookCard", onclick: act(() => openBook(entry)) },
+      el("img", { src: book.cover, alt: "" }), el("span", { className: "t", textContent: book.title }),
+      el("span", { className: "sub", textContent: `${done} of ${book.chapters.length} chapters read` }));
+  })));
+  show("library");
+}
+
+let entry = null, book = null;
+async function openBook(e) {
+  entry = e; book = await bookAt(e);
+  const prog = progressOf(e.path);
+  $("bookTitle").textContent = book.title;
+  $("bookCover").src = book.cover;
+  $("bookBlurb").replaceChildren(...book.blurb.map(l => el("p", { textContent: l })));
+  $("chapters").replaceChildren(...book.chapters.map((c, i) => {
+    const open = i === 0 || !!prog.done[i - 1], resume = prog.cur?.ch === i;
+    const badge = el("span", { className: "badge" });
+    badge.innerHTML = !open ? ICON.lock : resume ? ICON.play : prog.done[i] ? ICON.star : "";
+    return el("button", { className: "chap", disabled: !open, onclick: act(() => resume ? resumeChapter() : startChapter(i)) },
+      el("span", { className: "n", textContent: i + 1 }), el("span", { className: "t", textContent: c.title }), badge);
+  }));
+  show("book");
+}
+
+// ---- reading: game = { prog, chapter, scene, state, view }; prog.cur = { ch, scene, before, taps, words } is saved after every step ----
+let game = null;
+
+async function startChapter(i) {
+  const prog = progressOf(entry.path);
+  // Stars and things carry over: a chapter starts where the one before it ended.
+  const state = i > 0 && prog.ends[i - 1] ? S.clone(prog.ends[i - 1]) : S.newState(book);
+  prog.cur = { ch: i, scene: "", before: null, taps: [], words: 0 };
+  await enter(book.chapters[i].url, "", state);
+}
+
+async function enter(url, sceneId, state) {
+  const prog = progressOf(entry.path), effects = [];
+  for (let hops = 0; hops < 20; hops++) {
+    const chapter = await chapterAt(url);
+    const scene = chapter.scenes[sceneId || chapter.start];
+    if (!scene) throw new Error(`no scene "${sceneId}" in ${url}`);
+    const before = S.clone(state);
+    const view = S.enterScene(scene, state);
+    effects.push(...view.effects);
+    if (view.go) {
+      const t = S.resolveTarget(view.go, chapter.url);
+      if (t.end) return finish(state, effects);
+      url = t.file || url; sceneId = t.scene;
+      continue;
+    }
+    const ch = book.chapters.findIndex(c => c.url === chapter.url);
+    // Resuming replays the scene from `before` plus the tapped words, so entry commands never run twice.
+    Object.assign(prog.cur, { ch: ch < 0 ? prog.cur.ch : ch, scene: scene.id, before, taps: [], words: prog.cur.words + S.countWords(view.blocks) });
+    store();
+    game = { prog, chapter, scene, state, view };
+    render();
+    dropSays();
+    toast(effects);
+    return;
+  }
+  throw new Error("too many {go} jumps in a row");
+}
+
+async function resumeChapter() {
+  const prog = progressOf(entry.path), cur = prog.cur;
+  const chapter = await chapterAt(book.chapters[cur.ch].url);
+  const scene = chapter.scenes[cur.scene];
+  if (!scene || !cur.before) return startChapter(cur.ch);   // the story file changed since this was saved
+  const state = S.clone(cur.before);
+  const view = S.enterScene(scene, state);
+  for (const i of cur.taps) S.tap(scene, i, state);
+  game = { prog, chapter, scene, state, view };
+  render();
+}
+
+function render() {
+  const { chapter, view, prog } = game;
+  $("readTitle").textContent = book.chapters[prog.cur.ch]?.title || chapter.title;
+  const blocks = [...view.blocks];
+  const pic = blocks[0]?.t === "img" ? blocks.shift() : null;   // a picture at the top of a scene goes in the picture column
+  while (blocks[0]?.t === "gap") blocks.shift();
+  $("pic").replaceChildren(...(pic ? [el("img", { src: pic.src, alt: pic.alt })] : []));
+  $("page").classList.toggle("nopic", !pic);
+  $("story").replaceChildren(...blocks.map(b =>
+    b.t === "gap" ? el("div", { className: "gap" }) :
+    b.t === "img" ? el("figure", {}, el("img", { src: b.src, alt: b.alt })) :
+    el("p", {}, ...b.parts.flatMap(p => p.t === "tap"
+      ? [el("span", { className: "tap" + (prog.cur.taps.includes(p.i) ? " got" : ""), textContent: p.s, onclick: e => onTap(p.i, e.currentTarget) })]
+      : words(p.s)))));
+  const page = $("page");
+  page.style.animation = "none"; void page.offsetWidth; page.style.animation = "";
+  renderChoices();
+  renderBag($("bag"), game.state);
+  show("reader");
+}
+/** Plain text -> word spans; `**strong**` and `*em*` wrap their words. */
+function words(s) {
+  return s.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/).filter(Boolean).flatMap(seg => {
+    const m = /^(\*\*?)(.+)\1$/.exec(seg);
+    const nodes = (m ? m[2] : seg).split(/(\s+)/).filter(Boolean).map(w => /\s/.test(w) ? document.createTextNode(w) : el("span", { className: "w", textContent: w }));
+    return m ? [el(m[1].length === 2 ? "strong" : "em", {}, ...nodes)] : nodes;
+  });
+}
+
+// Plain words: tap to mark them yellow (helps keep the place while reading).
+$("story").addEventListener("click", e => { if (e.target.classList.contains("w")) e.target.classList.toggle("hl"); });
+
+function onTap(i, node) {
+  const { scene, prog, state } = game;
+  let effects;
+  if (prog.cur.taps.includes(i)) effects = scene.tokens[i].ops.filter(o => o.op === "say").map(o => ({ kind: "say", text: o.text }));
+  else { effects = S.tap(scene, i, state); prog.cur.taps.push(i); store(); }
+  node.classList.add("got");
+  toast(effects);
+  renderBag($("bag"), state);
+  renderChoices();
+}
+
+function renderChoices() {
+  const { view, state } = game;
+  $("choices").replaceChildren(...view.choices.flatMap(c => {
+    const st = S.choiceState(c, state);
+    if (st === "hidden") return [];
+    const b = el("button", { className: "choice" }, el("span", { className: "lbl", textContent: c.label }));
+    if (st === "on") { b.insertAdjacentHTML("beforeend", ICON.go); b.onclick = act(() => choose(c)); return [b]; }
+    // Locked: greyed, with a lock and the pictures of what's missing; tapping says what's needed.
+    b.classList.add("locked");
+    b.setAttribute("aria-disabled", "true");
+    const icons = needIcons(c.cond);
+    const need = el("span", { className: "need" });
+    need.innerHTML = ICON.lock;
+    need.append(...icons.map(src => el("img", { src, alt: "" })));
+    b.append(need);
+    b.onclick = () => toast([{ kind: "need", icons }]);
+    return [b];
+  }));
+}
+function needIcons(cond) {
+  return S.needs(cond).flatMap(n => {
+    const icon = book.items[n.name]?.icon || book.stats[n.name]?.icon;
+    return icon ? Array(Math.min(n.n, 6)).fill(icon) : [];
+  });
+}
+
+async function choose(c) {
+  buzz(15);
+  const t = S.resolveTarget(c.target, game.chapter.url);
+  if (t.end) return finish(game.state, []);
+  await enter(t.file || game.chapter.url, t.scene, game.state);
+}
+
+function finish(state, effects) {
+  const prog = progressOf(entry.path), i = prog.cur.ch, words = prog.cur.words;
+  prog.ends[i] = S.clone(state);
+  prog.done[i] = 1;
+  prog.cur = null;
+  store();
+  $("doneText").textContent = `You finished "${book.chapters[i].title}"!`;
+  $("doneWords").textContent = `You read ${words} words!`;
+  renderBag($("doneBag"), state);
+  const next = book.chapters[i + 1];
+  $("doneNext").hidden = !next;
+  if (next) { $("doneNext").textContent = `Next: ${next.title}`; $("doneNext").onclick = act(() => startChapter(i + 1)); }
+  show("finish");
+  buzz(60);
+  toast(effects);
+}
+
+function renderBag(box, state) {
+  const kids = [];
+  for (const [name, def] of Object.entries(book.stats)) {
+    const v = state.stats[name] ?? 0;
+    const b = el("button", { className: "it stat", title: def.label, onclick: () => toast([{ kind: "stat", name, delta: 0, value: v }]) });
+    if (!def.icon) b.append(`${def.label} ${v}`);
+    else if (v <= 5) b.append(...Array.from({ length: v }, () => el("img", { src: def.icon, alt: "" })));
+    else b.append(el("img", { src: def.icon, alt: "" }), `×${v}`);
+    if (def.icon && !v) b.append("0");
+    kids.push(b);
+  }
+  for (const [name, n] of Object.entries(state.items)) {
+    const def = book.items[name];
+    if (!def) continue;
+    const b = el("button", { className: "it", title: def.label, onclick: () => toast([{ kind: "item", name, delta: 0 }]) },
+      def.icon ? el("img", { src: def.icon, alt: def.label }) : def.label);
+    if (n > 1) b.append(el("span", { className: "cnt", textContent: n }));
+    kids.push(b);
+  }
+  box.replaceChildren(...kids);
+}
+
+// ---- toasts: one at a time; tap to skip ----
+const toastQueue = [];
+let toastBusy = false, toastNow = null;
+function toast(effects) {
+  for (const e of effects) if (!(e.kind === "say" && toastQueue.some(q => q.kind === "say" && q.text === e.text))) toastQueue.push(e);
+  if (!toastBusy) nextToast();
+}
+/** A new page makes old remarks stale: drop queued and showing "say" toasts (found things and stars still show). */
+function dropSays() {
+  for (let i = toastQueue.length - 1; i >= 0; i--) if (toastQueue[i].kind === "say") toastQueue.splice(i, 1);
+  if (toastNow?.kind === "say") toastNow.done();
+}
+function describe(e) {
+  const def = e.kind === "item" ? book?.items[e.name] : e.kind === "stat" ? book?.stats[e.name] : null;
+  const icons = e.icons || (def?.icon ? [def.icon] : []);
+  const label = def?.label ?? "";
+  if (e.kind === "need") return { text: "You need:", icons };
+  if (e.kind === "say") return { text: e.text, icons };
+  if (e.kind === "item") return { text: e.delta > 0 ? `You got the ${label.toLowerCase()}!` : e.delta < 0 ? `Bye, ${label.toLowerCase()}!` : label, icons };
+  return { text: e.delta ? `${e.delta > 0 ? "+" : ""}${e.delta} ${label}!` : `${label}: ${e.value}`, icons };
+}
+function nextToast() {
+  const e = toastQueue.shift();
+  if (!e) { toastBusy = false; toastNow = null; $("toasts").replaceChildren(); return; }
+  toastBusy = true;
+  const { text, icons } = describe(e);
+  const t = el("div", { className: "toast" + (e.kind === "say" ? " say" : "") }, el("span", { textContent: text }), ...icons.map(src => el("img", { src, alt: "" })));
+  if (e.kind !== "need" && e.kind !== "say") t.prepend(t.lastChild);   // icon first for "You got..."
+  $("toasts").replaceChildren(t);
+  if (e.delta > 0) buzz(40);
+  let timer = 0;
+  const done = () => { if (t.classList.contains("out")) return; clearTimeout(timer); t.classList.add("out"); setTimeout(nextToast, 250); };
+  toastNow = { kind: e.kind, done };
+  t.onclick = done;
+  timer = setTimeout(done, e.kind === "say" ? 1500 + text.length * 50 : 2200);
+}
+
+// ---- grown-ups page: rules, text size, reset ----
+const SIZES = [0.85, 1, 1.2];
+function applySize() {
+  document.documentElement.style.setProperty("--fs", SIZES[save.size] ?? 1);
+  for (const b of $("sizeSeg").children) b.classList.toggle("on", Number(b.dataset.size) === save.size);
+}
+$("sizeSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; save.size = Number(b.dataset.size); store(); applySize(); });
+let resetArmed = 0;
+$("resetBtn").addEventListener("click", () => {
+  if (!resetArmed) {
+    $("resetBtn").textContent = "Tap again to erase everything";
+    resetArmed = setTimeout(() => { resetArmed = 0; $("resetBtn").textContent = "Erase all progress"; }, 4000);
+    return;
+  }
+  clearTimeout(resetArmed); resetArmed = 0;
+  save.books = {}; store();
+  lastScreen = "library";
+  $("resetBtn").textContent = "All progress erased";
+});
+$("introGo").addEventListener("click", act(() => { save.intro = true; store(); return lastScreen === "library" || !entry ? openLibrary() : openBook(entry); }));
+for (const b of document.querySelectorAll(".parentsBtn")) { b.innerHTML = ICON.parents; b.addEventListener("click", () => show("intro")); }
+$("bookBack").innerHTML = ICON.home;
+$("bookBack").addEventListener("click", act(openLibrary));
+$("readBack").innerHTML = ICON.back;
+$("readBack").addEventListener("click", act(() => openBook(entry)));
+$("doneBook").addEventListener("click", act(() => openBook(entry)));
+
+applySize();
+if (save.intro) act(openLibrary)(); else show("intro");
+</script>
+</body>
+</html>
