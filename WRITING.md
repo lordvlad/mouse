@@ -1,158 +1,167 @@
-# Writing books
+# Bücher schreiben
 
-Books are plain markdown files in `public/books/`. No code changes are needed to add a book or chapter: the app and
-the offline cache both follow the links between the files. After editing, run
+Bücher sind einfache Markdown-Dateien in `public/books/`. Für ein neues Buch oder Kapitel muss kein Code geändert
+werden: Die App und der Offline-Speicher folgen den Links zwischen den Dateien. Nach dem Bearbeiten prüfen mit
 
 ```bash
 bun scripts/check.js
 ```
 
-It reports broken links, unknown items/stats, missing pictures, unbalanced `{if}`/`{end}`, dead-end scenes and
-unreachable scenes, with file and line. CI runs it before every deploy.
+Das meldet kaputte Links, unbekannte Dinge und Werte, fehlende Bilder, `{if}` ohne `{end}`, Szenen ohne Ausweg und
+unerreichbare Szenen, jeweils mit Datei und Zeile. CI prüft das vor jeder Veröffentlichung.
 
-## Files
+## Dateien
 
 ```
 public/books/
-  library.md              list of books
-  mouse/
-    book.md               title, cover, stats, items, chapter list
-    01-the-cheese.md      a chapter: a set of scenes
-    02-sleeping-cats.md
-    pics/*.svg            pictures and item icons
+  library.md                  Liste der Bücher
+  maus/
+    book.md                   Titel, Bild, Werte, Dinge, Kapitel
+    01-der-kaese.md           ein Kapitel: eine Reihe von Szenen
+    02-schlafende-katzen.md
+    pics/*.svg                Bilder und Symbole
 ```
 
-All paths are relative to the file they appear in. `<!-- comments -->` are ignored everywhere.
+Alle Pfade sind relativ zur Datei, in der sie stehen. `<!-- Kommentare -->` werden überall ignoriert.
+Namen (Szenen, Dinge, Werte, Merker) bestehen nur aus `a-z`, Ziffern und `_` (Szenen auch `-`), also ohne Umlaute:
+`kruemel`, `grosser_kaese`. Der angezeigte Text darf natürlich Umlaute haben.
 
 ### library.md
 
 ```markdown
-# Library
-- [Mouse](mouse/book.md)
+# Bücherei
+- [Maus](maus/book.md)
 ```
 
 ### book.md
 
 ```markdown
 ---
-title: Mouse
-cover: pics/pip.svg
+titel: Maus
+bild: pics/pip.svg
 ---
-Pip is a little mouse.            <- blurb, shown on the book page (one line per line)
+Pip ist eine kleine Maus.          <- Klappentext auf der Buchseite (Zeile für Zeile)
 
-## Stats
-- brave: Brave ![](pics/star.svg) = 1         <- name: Label  icon  = start value
+## Werte
+- mut: Mut ![](pics/star.svg) = 1                 <- name: Anzeige  Symbol  = Startwert
 
-## Items
-- sock: Sock ![](pics/sock.svg)                 <- name: Label  icon
+## Dinge
+- socke: die Socke ![](pics/sock.svg)             <- name: Anzeige mit Artikel  Symbol
 
-## Chapters
-1. [The Cheese](01-the-cheese.md)
-2. [Sleeping Cats](02-sleeping-cats.md)
+## Kapitel
+1. [Der Käse](01-der-kaese.md)
+2. [Schlafende Katzen](02-schlafende-katzen.md)
 ```
 
-- **Stats** are numbers (never below 0). The reader sees them as a row of icons at the top.
-- **Items** are things the hero carries, shown in the bag. An item can be carried more than once (a count badge appears).
-- **Chapters** open one after the other. A chapter starts with the stats, items and flags the previous chapter ended with,
-  so things found in chapter 1 can be used in chapter 2. Chapter 1 starts with the stat start values and nothing in the bag.
+- **Werte** sind Zahlen (nie unter 0). Das Kind sieht sie oben als Reihe von Symbolen.
+- **Dinge** trägt die Hauptfigur in der Tasche. Ein Ding kann mehrfach da sein (dann erscheint eine Zahl).
+  Die Anzeige bekommt den Artikel, denn die App sagt „Gefunden: die Socke!“ und „Weg ist der Krümel!“.
+- **Kapitel** öffnen sich nacheinander. Ein Kapitel beginnt mit den Werten, Dingen und Merkern, mit denen das vorige
+  geendet hat; was in Kapitel 1 gefunden wurde, hilft also in Kapitel 2. Kapitel 1 beginnt mit den Startwerten und leerer Tasche.
+- Statt `titel`/`bild` und `## Werte`/`## Dinge`/`## Kapitel` gehen auch die englischen Namen
+  `title`/`cover` und `## Stats`/`## Items`/`## Chapters`.
 
-## Chapters and scenes
+## Kapitel und Szenen
 
-A chapter is a list of scenes. A scene starts with `# scene-id` (letters, digits, `-`, `_`). The first scene is where
-the chapter starts (or set `start: id` in the front matter).
+Ein Kapitel ist eine Liste von Szenen. Eine Szene beginnt mit `# szenen-name`. Die erste Szene ist der Anfang des
+Kapitels (oder oben `start: name` angeben).
 
 ```markdown
 ---
-title: The Cheese
+titel: Der Käse
 ---
 
-# home
-![Pip the mouse](pics/pip.svg)
-Hi! I am Pip.
-I live in a [hole]{say "Just right for me!"} in the wall.
-My tummy says: *grrr*.
+# zuhause
+![Pip, die Maus](pics/pip.svg)
+Hallo! Ich bin Pip.
+Ich wohne in einem [Loch]{say "Genau richtig für mich!"} in der Wand.
+Mein Bauch macht: *grrr*.
 
-[[Peek out of the hole -> peek]]
-[[Hide in my bed -> bed]]
+[[Aus dem Loch gucken -> gucken]]
+[[Im Bett verstecken -> bett]]
 ```
 
-- Every line is shown as its own line; an empty line adds a little space. Keep lines short for early readers.
-- A picture as the first line of a scene goes into the big picture area (beside the text in landscape). Pictures further
-  down are shown inline.
-- `*word*` is slanted, `**WORD**` is extra bold.
-- Any other word can be tapped by the child to mark it yellow (a reading aid; nothing to write).
+- Jede Zeile wird als eigene Zeile gezeigt; eine Leerzeile macht etwas Abstand. Für Leseanfänger kurze Zeilen schreiben.
+- Ein Bild in der ersten Zeile einer Szene kommt in die große Bildfläche (im Querformat neben dem Text). Weitere Bilder
+  stehen im Text.
+- `*Wort*` ist schräg, `**WORT**` extra fett.
+- Jedes andere Wort kann das Kind antippen, um es gelb zu markieren (eine Lesehilfe; dafür muss man nichts schreiben).
 
-### Choices
+### Auswahl
 
 ```markdown
-[[Label -> target]]
-[[Climb up the chair -> chair | if brave >= 2]]     shown greyed with a lock until the condition holds
-[[Eat the crumb -> eat | only crumb]]               hidden until the condition holds
+[[Text -> ziel]]
+[[Auf den Stuhl klettern -> stuhl | if mut >= 2]]     grau mit Schloss, bis die Bedingung stimmt
+[[Den Krümel essen -> essen | only kruemel]]          unsichtbar, bis die Bedingung stimmt
 ```
 
-Targets:
+Ziele:
 
-| Target | Goes to |
+| Ziel | Führt zu |
 |---|---|
-| `scene-id` | a scene in this chapter |
-| `other.md` / `other.md#scene-id` | the start (or a scene) of another chapter of the same book |
-| `@end` | finishes the chapter: the "You did it!" page, the next chapter unlocks |
+| `szenen-name` | einer Szene in diesem Kapitel |
+| `datei.md` / `datei.md#szenen-name` | dem Anfang (oder einer Szene) eines anderen Kapitels im selben Buch |
+| `@end` | beendet das Kapitel: „Geschafft!“-Seite, das nächste Kapitel öffnet sich |
 
-A locked choice shows a lock and the icons of what is missing (`brave >= 2` shows two stars). Tapping it says
-"You need:" with those icons. Every scene needs at least one choice (or a `{go}`), otherwise the reader gets stuck.
+Eine verschlossene Auswahl zeigt ein Schloss und die Symbole dessen, was fehlt (`mut >= 2` zeigt zwei Sterne).
+Beim Antippen erscheint „Du brauchst:“ mit diesen Symbolen. Jede Szene braucht mindestens eine Auswahl (oder ein
+`{go}`), sonst geht es nicht weiter.
 
-### Tappable words
+### Tipp-Wörter
 
-`[word]{commands}` makes a glowing word. Tapping it runs the commands once per visit of the scene; a `say` repeats
-every tap.
+`[Wort]{Befehle}` macht ein leuchtendes Wort. Beim Antippen laufen die Befehle einmal pro Besuch der Szene; ein `say`
+erscheint bei jedem Tippen.
 
 ```markdown
-Look! A [crumb]{get crumb} on the floor.
-Next to it is a little [bell]{get bell; say "Ding, ding!"}.
+Guck mal! Ein [Krümel]{get kruemel} auf dem Boden.
+Daneben liegt eine kleine [Glocke]{get glocke; say "Kling, kling!"}.
 ```
 
-### Commands
+### Befehle
 
-Commands go in `{ }`, several separated by `;`. Commands outside a tappable word run when the scene is entered.
+Befehle stehen in `{ }`, mehrere durch `;` getrennt. Befehle außerhalb eines Tipp-Worts laufen, sobald die Szene
+betreten wird. Die Befehlswörter sind englisch.
 
-| Command | Effect |
+| Befehl | Wirkung |
 |---|---|
-| `get sock` / `get crumb 2` | add an item (the child sees "You got the sock!") |
-| `lose sock` | remove an item ("Bye, sock!") |
-| `brave +1` / `brave -1` / `brave = 3` | change a stat ("+1 Brave!") |
-| `set fed_bug` / `unset fed_bug` | set or clear a hidden flag (remembers what happened) |
-| `say "Just a mop. Phew!"` | show a speech bubble |
-| `go scene-id` | jump straight on to another scene (same targets as choices) |
-| `if condition` ... `else` ... `end` | show text, choices and commands only when the condition holds |
+| `get socke` / `get kruemel 2` | Ding dazu (das Kind sieht „Gefunden: die Socke!“) |
+| `lose socke` | Ding weg („Weg ist die Socke!“) |
+| `mut +1` / `mut -1` / `mut = 3` | Wert ändern („+1 Mut!“) |
+| `set kiki_satt` / `unset kiki_satt` | unsichtbaren Merker setzen oder löschen (merkt sich, was passiert ist) |
+| `say "Nur ein alter Besen. Puh!"` | Sprechblase zeigen |
+| `go szenen-name` | sofort zu einer anderen Szene springen (Ziele wie bei der Auswahl) |
+| `if Bedingung` ... `else` ... `end` | Text, Auswahl und Befehle nur zeigen, wenn die Bedingung stimmt |
 
-`{if}` blocks can span lines and be nested:
+`{if}`-Blöcke dürfen über mehrere Zeilen gehen und verschachtelt sein:
 
 ```markdown
-{if fed_bug}
-"Thank you for the crumb!" says Bug.
+{if kiki_satt}
+„Danke für den Krümel!“, sagt Kiki.
 {else}
-"I am so hungry," says Bug.
-[[Give Bug the crumb -> give | if crumb]]
+„Ich habe so großen Hunger“, sagt Kiki.
+[[Kiki den Krümel geben -> geben | if kruemel]]
 {end}
 ```
 
-### Conditions
+### Bedingungen
 
-Used by `{if ...}`, `| if ...` and `| only ...`.
+Für `{if ...}`, `| if ...` und `| only ...`.
 
-- A name is its value: a stat's number, an item's count, or 1/0 for a flag. Unknown names are 0.
-- Compare with `>= <= > < = !=`, combine with `and`, `or`, `not` and parentheses.
+- Ein Name steht für seinen Wert: die Zahl eines Werts, die Anzahl eines Dings oder 1/0 für einen Merker.
+  Unbekannte Namen sind 0.
+- Vergleichen mit `>= <= > < = !=`, verknüpfen mit `and` (und), `or` (oder), `not` (nicht) und Klammern.
 
 ```
-crumb                      carrying a crumb
-not crumb and not fed_bug
-brave >= 2
-(bell or sock) and brave > 1
+kruemel                         hat einen Krümel dabei
+not kruemel and not kiki_satt
+mut >= 2
+(glocke or socke) and mut > 1
 ```
 
-## Tips for early readers
+## Tipps für Leseanfänger
 
-- Short lines, one idea per line, mostly short and common words. Repeat sounds ("Tip, tap, tip, tap").
-- Put useful things behind tappable words so careful reading pays off, and make sure the story can't get stuck when
-  a child misses one (offer another way, or give the item again later, guarded by `{if not item}`).
-- Locked choices are a reason to explore; give at least one open choice in every scene.
+- Kurze Zeilen, ein Gedanke pro Zeile, meist kurze und bekannte Wörter. Klänge wiederholen („Tipp, tapp, tipp, tapp“).
+- Nützliches hinter Tipp-Wörtern verstecken, damit genaues Lesen sich lohnt, aber dafür sorgen, dass die Geschichte
+  nicht hängen bleibt, wenn ein Kind eins übersieht (einen anderen Weg anbieten oder das Ding später noch einmal geben,
+  geschützt mit `{if not ding}`).
+- Verschlossene Auswahl macht neugierig; in jeder Szene aber mindestens eine offene Auswahl anbieten.

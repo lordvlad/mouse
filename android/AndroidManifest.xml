@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.mouse">
     <uses-permission android:name="android.permission.VIBRATE" />
     <application
-        android:label="Mouse Adventures"
+        android:label="Mäuseabenteuer"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:theme="@style/Theme"

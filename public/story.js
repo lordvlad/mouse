@@ -31,26 +31,30 @@ export function parseLibrary(src, url) {
   return books;
 }
 
-/** Book file: front matter (title, cover), blurb, then `## Stats`, `## Items`, `## Chapters` sections. */
+// German and English section names / front-matter keys are both accepted.
+const SECTIONS = { stats: "stats", werte: "stats", items: "items", dinge: "items", chapters: "chapters", kapitel: "chapters" };
+
+/** Book file: front matter (titel, bild), blurb, then `## Werte`, `## Dinge`, `## Kapitel` sections. */
 export function parseBook(src, url) {
   const { meta, body, offset } = splitFrontMatter(src);
-  const book = { url, title: meta.title || "", cover: meta.cover ? abs(meta.cover, url) : "", blurb: [], stats: {}, items: {}, chapters: [], errors: [] };
-  let section = "";
+  const cover = meta.bild || meta.cover;
+  const book = { url, title: meta.titel || meta.title || "", cover: cover ? abs(cover, url) : "", blurb: [], stats: {}, items: {}, chapters: [], errors: [] };
+  let section = "", heading = "";
   body.split("\n").forEach((l, i) => {
     const line = i + 1 + offset;
     const h = /^##\s+(.+?)\s*$/.exec(l);
-    if (h) { section = h[1].toLowerCase(); return; }
+    if (h) { heading = h[1]; section = SECTIONS[h[1].toLowerCase()] || "?"; return; }
     if (/^#\s/.test(l)) { if (!book.title) book.title = l.slice(2).trim(); return; }
     if (!section) { if (l.trim()) book.blurb.push(l.trim()); return; }
     if (!l.trim()) return;
     if (section === "chapters") {
       const m = /^\s*(?:\d+\.|[-*])\s*\[([^\]]+)\]\(([^)\s]+)\)/.exec(l);
       if (m) book.chapters.push({ title: m[1].trim(), path: m[2], url: abs(m[2], url) });
-      else book.errors.push({ line, msg: `chapter line must be "1. [Title](file.md)": ${l.trim()}` });
+      else book.errors.push({ line, msg: `Kapitel-Zeilen sehen so aus: "1. [Titel](datei.md)": ${l.trim()}` });
       return;
     }
     const m = /^\s*[-*]\s*(\w+)\s*:\s*(.*)$/.exec(l);
-    if (!m || (section !== "stats" && section !== "items")) { book.errors.push({ line, msg: `unexpected line in "## ${section}": ${l.trim()}` }); return; }
+    if (!m || (section !== "stats" && section !== "items")) { book.errors.push({ line, msg: `unerwartete Zeile unter "## ${heading}" (erlaubt: ## Werte, ## Dinge, ## Kapitel): ${l.trim()}` }); return; }
     let rest = m[2];
     const img = IMG.exec(rest);
     const icon = img ? abs(img[2], url) : "";
@@ -73,10 +77,10 @@ export function compileCond(src) {
   COND_TOKEN.lastIndex = 0;
   let m;
   while (COND_TOKEN.lastIndex < src.length && (m = COND_TOKEN.exec(src))) toks.push(m[1]);
-  if (src.slice(COND_TOKEN.lastIndex).trim()) throw new Error(`can't read condition "${src}"`);
+  if (src.slice(COND_TOKEN.lastIndex).trim()) throw new Error(`Bedingung "${src}" ist nicht lesbar`);
   let p = 0;
   const peek = () => toks[p], take = () => toks[p++];
-  const expect = t => { if (take() !== t) throw new Error(`expected "${t}" in condition "${src}"`); };
+  const expect = t => { if (take() !== t) throw new Error(`"${t}" fehlt in der Bedingung "${src}"`); };
   function or() { let a = and(); while (peek() === "or") { take(); a = { op: "or", a, b: and() }; } return a; }
   function and() { let a = not(); while (peek() === "and") { take(); a = { op: "and", a, b: not() }; } return a; }
   function not() { if (peek() === "not") { take(); return { op: "not", a: not() }; } return cmp(); }
@@ -87,14 +91,14 @@ export function compileCond(src) {
   }
   function atom() {
     const t = take();
-    if (t === undefined) throw new Error(`condition "${src}" ends too early`);
+    if (t === undefined) throw new Error(`Bedingung "${src}" hört zu früh auf`);
     if (t === "(") { const e = or(); expect(")"); return e; }
     if (/^\d+$/.test(t)) return { op: "num", v: Number(t) };
     if (/^[A-Za-z_]\w*$/.test(t) && !["and", "or", "not"].includes(t)) return { op: "name", v: t };
-    throw new Error(`unexpected "${t}" in condition "${src}"`);
+    throw new Error(`unerwartetes "${t}" in der Bedingung "${src}"`);
   }
   const ast = or();
-  if (p !== toks.length) throw new Error(`unexpected "${toks[p]}" in condition "${src}"`);
+  if (p !== toks.length) throw new Error(`unerwartetes "${toks[p]}" in der Bedingung "${src}"`);
   return ast;
 }
 
@@ -153,7 +157,7 @@ function parseOps(src) {
     if ((m = /^say\s+"(.*)"$/.exec(s)) || (m = /^say\s+(.+)$/.exec(s))) return { op: "say", text: m[1] };
     if ((m = /^go\s+(\S+)$/.exec(s))) return { op: "go", target: m[1] };
     if ((m = /^(\w+)\s*([+\-=])\s*(\d+)$/.exec(s))) return { op: "stat", name: m[1], how: m[2], n: Number(m[3]) };
-    throw new Error(`unknown command "{${s}}"`);
+    throw new Error(`unbekannter Befehl "{${s}}"`);
   });
 }
 
@@ -168,7 +172,7 @@ function tokenizeLine(l, url, line, errors, tokens) {
     try {
       if (m[1] !== undefined) {
         const c = /^(.*?)\s*->\s*([^|]+?)\s*(?:\|\s*(if|only)\s+(.+?))?\s*$/.exec(m[1]);
-        if (!c) throw new Error(`choice needs "label -> target": [[${m[1]}]]`);
+        if (!c) throw new Error(`eine Auswahl braucht "Text -> Ziel": [[${m[1]}]]`);
         tokens.push({ t: "choice", label: c[1].trim(), target: c[2], mode: c[3] || "", src: c[4] || "", cond: c[4] ? compileCond(c[4]) : null, line });
       } else if (m[2] !== undefined) tokens.push({ t: "img", alt: m[2], src: abs(m[3], url), path: m[3], line });
       else if (m[4] !== undefined) tokens.push({ t: "tap", s: m[4], ops: parseOps(m[5]), line });
@@ -182,19 +186,19 @@ function tokenizeLine(l, url, line, errors, tokens) {
 /** Chapter file: optional front matter (title), then scenes, each starting with a `# scene-id` line. */
 export function parseChapter(src, url) {
   const { meta, body, offset } = splitFrontMatter(src);
-  const ch = { url, title: meta.title || "", scenes: {}, order: [], errors: [] };
+  const ch = { url, title: meta.titel || meta.title || "", scenes: {}, order: [], errors: [] };
   let scene = null;
   body.split("\n").forEach((l, i) => {
     const line = i + 1 + offset;
     const h = /^#\s+([\w-]+)\s*$/.exec(l);
     if (h) {
-      if (ch.scenes[h[1]]) ch.errors.push({ line, msg: `scene "${h[1]}" exists twice` });
+      if (ch.scenes[h[1]]) ch.errors.push({ line, msg: `Szene "${h[1]}" gibt es zweimal` });
       else ch.order.push(h[1]);
       scene = ch.scenes[h[1]] = { id: h[1], line, tokens: [] };
       return;
     }
-    if (/^#/.test(l)) { ch.errors.push({ line, msg: `scene headings are "# id" (letters, digits, -, _): ${l}` }); return; }
-    if (!scene) { if (l.trim()) ch.errors.push({ line, msg: "text before the first \"# scene\" heading is ignored" }); return; }
+    if (/^#/.test(l)) { ch.errors.push({ line, msg: `Szenen-Überschriften sehen so aus: "# name" (Buchstaben a-z, Ziffern, -, _): ${l}` }); return; }
+    if (!scene) { if (l.trim()) ch.errors.push({ line, msg: "Text vor der ersten \"# szene\"-Überschrift wird ignoriert" }); return; }
     tokenizeLine(l, url, line, ch.errors, scene.tokens);
   });
   ch.start = meta.start || ch.order[0];
@@ -292,5 +296,5 @@ export function resolveTarget(target, chapterUrl) {
 }
 
 /** Words in a rendered scene (for the "you read N words" cheer). */
-export const countWords = blocks => blocks.reduce((n, b) => n + (b.t === "line" ? b.parts.map(p => p.s).join("").split(/\s+/).filter(w => /\w/.test(w)).length : 0), 0);
+export const countWords = blocks => blocks.reduce((n, b) => n + (b.t === "line" ? b.parts.map(p => p.s).join("").split(/\s+/).filter(w => /[\p{L}\d]/u.test(w)).length : 0), 0);
 

@@ -1,4 +1,4 @@
-# Library
+# Bücherei
 
-<!-- One line per book: - [Title](folder/book.md) -->
-- [Mouse](mouse/book.md)
+<!-- Eine Zeile pro Buch: - [Titel](ordner/book.md) -->
+- [Maus](maus/book.md)
